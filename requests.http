@@ -1,0 +1,32 @@
+### Register a device
+POST http://localhost:8080/api/devices
+Content-Type: application/json
+
+{
+  "name": "Workstation-01",
+  "ipAddress": "192.168.1.10"
+}
+
+### Get all devices
+GET http://localhost:8080/api/devices
+
+### Get devices filtered by status
+GET http://localhost:8080/api/devices?status=ONLINE
+
+### Get one device (replace 1 with actual ID from create response)
+GET http://localhost:8080/api/devices/1
+
+### Update a device
+PUT http://localhost:8080/api/devices/3
+Content-Type: application/json
+
+{
+  "status": "OFFLINE"
+}
+
+### Get device status summary with rankings
+GET http://localhost:8080/api/devices/summary
+
+### Delete a device
+DELETE http://localhost:8080/api/devices/1
+
