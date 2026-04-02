@@ -11,6 +11,8 @@ import java.time.Instant;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ThreadLocalRandom;
 
 @Service
 public class DeviceService {
@@ -79,6 +81,55 @@ public class DeviceService {
         return repository.getStatusSummaryWithRank()
                 .stream()
                 .map(DeviceStatusSummary::new)
+                .toList();
+    }
+
+    // Simulates pinging a device asynchronously
+    public CompletableFuture<Device> checkDeviceHealth(Long id){
+        Device device = getDeviceById(id);
+
+        return CompletableFuture
+                .supplyAsync(() -> simulatePing(device))
+                .thenApply(isReachable -> {
+                    device.setStatus(isReachable ? DeviceStatus.ONLINE : DeviceStatus.OFFLINE);
+                    device.setLastSeenAt(Instant.now());
+                    return repository.save(device);
+                })
+                .exceptionally(ex -> {
+                    device.setStatus(DeviceStatus.UNKNOWN);
+                    return repository.save(device);
+                });
+    }
+
+    // Simulates network latency and occassional failures
+    private boolean simulatePing(Device device) {
+        try {
+            Thread.sleep(ThreadLocalRandom.current().nextInt(200,800));
+        } catch (InterruptedException e){
+            Thread.currentThread().interrupt();
+        }
+        // 80% chance online, 20% chance offline -- simulates real network conditions
+        return ThreadLocalRandom.current().nextInt(100) < 80;
+    }
+
+    public List<Device> checkAllDevicesHealth() {
+        List<Device> devices = repository.findAll();
+
+        List<CompletableFuture<Device>> futures = devices.stream()
+                .map(device -> CompletableFuture
+                        .supplyAsync(() -> simulatePing(device))
+                        .thenApply(isReachable -> {
+                            device.setStatus(isReachable ? DeviceStatus.ONLINE : DeviceStatus.OFFLINE);
+                            device.setLastSeenAt(Instant.now());
+                            return repository.save(device);
+                        }))
+                .toList();
+
+        // Wait for ALL pings to complete before returning
+        CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
+
+        return futures.stream()
+                .map(CompletableFuture::join)
                 .toList();
     }
 }

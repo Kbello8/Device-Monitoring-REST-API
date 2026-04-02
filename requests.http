@@ -27,6 +27,12 @@ Content-Type: application/json
 ### Get device status summary with rankings
 GET http://localhost:8080/api/devices/summary
 
+### Check health of one device
+POST http://localhost:8080/api/devices/1/health-check
+
+### Check health of all devices
+POST http://localhost:8080/api/devices/health-check
+
 ### Delete a device
 DELETE http://localhost:8080/api/devices/1
 

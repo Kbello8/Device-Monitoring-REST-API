@@ -10,6 +10,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.concurrent.CompletableFuture;
 import java.util.List;
 import java.util.Optional;
 
@@ -59,5 +60,17 @@ public class DeviceController {
     public ResponseEntity<List<DeviceStatusSummary>> getStatusSummary(){
         return ResponseEntity.ok(deviceService.getDeviceStatusSummary());
     }
+
+    @PostMapping("/{id}/health-check")
+    public CompletableFuture<ResponseEntity<Device>> checkHealth(@PathVariable long id){
+        return deviceService.checkDeviceHealth(id)
+                .thenApply(ResponseEntity::ok);
+    }
+
+    @PostMapping("/health-check")
+    public ResponseEntity<List<Device>> checkAllHealth(){
+        return ResponseEntity.ok(deviceService.checkAllDevicesHealth());
+    }
+
 
 }
