@@ -4,7 +4,7 @@ A Spring Boot REST API for monitoring networked devices.
 Built as a learning project covering Java 17, Spring Data JPA,
 async health checks with CompletableFuture, and SQL window functions.
 
-![CI](https://github.com/YOUR_USERNAME/device-monitoring-api/actions/workflows/ci.yml/badge.svg)
+![CI](https://github.com/Kbello8/device-monitoring-api/actions/workflows/ci.yml/badge.svg)
 
 ## Tech Stack
 - Java 17
