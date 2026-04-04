@@ -14,6 +14,11 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -137,5 +142,35 @@ class DevicemonitorApplicationTests {
 
 		assertThatThrownBy(() -> service.deleteDevice(99L))
 				.isInstanceOf(DeviceNotFoundException.class);
+	}
+
+	@Test
+	void cacheHandlesConcurrentReadsWithoutCorruption() throws InterruptedException {
+		//Arrange
+		when(repository.findById(1L)).thenReturn(Optional.of(testDevice));
+
+		int threadCount = 20;
+		ExecutorService executorService = Executors.newFixedThreadPool(threadCount);
+		CountDownLatch countDownLatch = new CountDownLatch(threadCount);
+		AtomicInteger successCount = new AtomicInteger(0);
+
+		// Act - 20 threads all request the same device simultaneously
+		for (int i = 0; i < threadCount; i++) {
+			executorService.submit(() -> {
+				try {
+					Device result = service.getDeviceById(1L);
+					if (result != null) successCount.incrementAndGet();
+				} finally {
+					countDownLatch.countDown();
+				}
+			});
+		}
+
+		countDownLatch.await(5, TimeUnit.SECONDS);
+		executorService.shutdown();
+
+		// Assert - all 20 threads got a result with no corruption
+		assertThat(successCount.get()).isEqualTo(threadCount);
+
 	}
 }

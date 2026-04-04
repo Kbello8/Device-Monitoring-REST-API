@@ -18,23 +18,26 @@ import java.util.concurrent.ThreadLocalRandom;
 public class DeviceService {
 
     private final DeviceRepository repository;
+    private final DeviceCacheService cacheService;
 
-    public DeviceService(DeviceRepository repository) {
+    public DeviceService(DeviceRepository repository, DeviceCacheService cacheService) {
         this.repository = repository;
+        this.cacheService = cacheService;
     }
 
-    // CREATE
-
+    // CREATE & populate Cache
     public Device registerDevice(Device device) {
         if (repository.existsByIpAddress(device.getIpAddress())) {
             throw new IllegalArgumentException("Device " + device.getIpAddress() + " already exists");
         }
         device.setStatus(DeviceStatus.UNKNOWN);
         device.setLastSeenAt(Instant.now());
-        return repository.save(device);
+        Device saved = repository.save(device);
+        cacheService.put(saved.getId(), saved);
+        return saved;
     }
 
-    // READ ALL - with optional status filter, sort by name
+    // READ ALL - with optional status filter, sort by name -- check cache first
     public List<Device> getAllDevices(Optional<DeviceStatus> status) {
         List<Device> devices = status
                 .map(s -> repository.findByStatus(s))
@@ -46,8 +49,13 @@ public class DeviceService {
 
     // READ ONE
     public Device getDeviceById(long id) {
-        return repository.findById(id)
-                .orElseThrow(() -> new DeviceNotFoundException(id));
+        return cacheService.get(id)
+                .orElseGet(() -> {
+                    Device device = repository.findById(id)
+                            .orElseThrow(() -> new DeviceNotFoundException(id));
+                    cacheService.put(device.getId(), device);
+                    return device;
+                });
     }
 
     // Update
@@ -68,13 +76,16 @@ public class DeviceService {
                     existingDevice.setLastSeenAt(Instant.now());
                 });
 
-        return repository.save(existingDevice);
+        Device saved = repository.save(existingDevice);
+        cacheService.invalidate(id);
+        return saved;
     }
 
     // Delete
     public void deleteDevice(long id) {
         Device device = getDeviceById(id);
         repository.delete(device);
+        cacheService.invalidate(id);
     }
 
     public List<DeviceStatusSummary> getDeviceStatusSummary() {

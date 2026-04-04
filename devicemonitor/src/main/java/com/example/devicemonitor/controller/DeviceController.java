@@ -3,13 +3,14 @@ package com.example.devicemonitor.controller;
 import com.example.devicemonitor.model.Device;
 import com.example.devicemonitor.model.DeviceStatus;
 import com.example.devicemonitor.model.DeviceStatusSummary;
+import com.example.devicemonitor.service.DeviceCacheService;
 import com.example.devicemonitor.service.DeviceService;
 import jakarta.validation.Valid;
-import org.apache.coyote.Response;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.List;
 import java.util.Optional;
@@ -19,9 +20,11 @@ import java.util.Optional;
 public class DeviceController {
 
     private final DeviceService deviceService;
+    private final DeviceCacheService cacheService;
 
-    public DeviceController(DeviceService deviceService) {
+    public DeviceController(DeviceService deviceService,  DeviceCacheService cacheService) {
         this.deviceService = deviceService;
+        this.cacheService = cacheService;
     }
 
     @PostMapping
@@ -30,6 +33,15 @@ public class DeviceController {
                 Device created = deviceService.registerDevice(device);
 
                 return ResponseEntity.status(HttpStatus.CREATED).body(created);
+    }
+
+    @GetMapping("/cache/stats")
+    public ResponseEntity<Map<String, Object>> getDeviceCacheStats() {
+        return ResponseEntity.ok(Map.of(
+                "cachedDevices", cacheService.size(),
+                "ttlSeconds",30
+        ));
+
     }
 
     @GetMapping

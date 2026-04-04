@@ -14,7 +14,7 @@ GET http://localhost:8080/api/devices
 GET http://localhost:8080/api/devices?status=ONLINE
 
 ### Get one device (replace 1 with actual ID from create response)
-GET http://localhost:8080/api/devices/1
+GET http://localhost:8080/api/devices/7
 
 ### Update a device
 PUT http://localhost:8080/api/devices/3
@@ -36,3 +36,5 @@ POST http://localhost:8080/api/devices/health-check
 ### Delete a device
 DELETE http://localhost:8080/api/devices/1
 
+### Check cache stats
+GET http://localhost:8080/api/devices/cache/stats
