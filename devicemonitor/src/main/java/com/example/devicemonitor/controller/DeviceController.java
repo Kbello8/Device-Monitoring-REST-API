@@ -4,6 +4,7 @@ import com.example.devicemonitor.model.Device;
 import com.example.devicemonitor.model.DeviceStatus;
 import com.example.devicemonitor.model.DeviceStatusSummary;
 import com.example.devicemonitor.service.DeviceCacheService;
+import com.example.devicemonitor.service.DeviceEventPublisher;
 import com.example.devicemonitor.service.DeviceService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -21,10 +22,12 @@ public class DeviceController {
 
     private final DeviceService deviceService;
     private final DeviceCacheService cacheService;
+    private final DeviceEventPublisher deviceEventPublisher;
 
-    public DeviceController(DeviceService deviceService,  DeviceCacheService cacheService) {
+    public DeviceController(DeviceService deviceService, DeviceCacheService cacheService, DeviceEventPublisher deviceEventPublisher) {
         this.deviceService = deviceService;
         this.cacheService = cacheService;
+        this.deviceEventPublisher = deviceEventPublisher;
     }
 
     @PostMapping
@@ -82,6 +85,13 @@ public class DeviceController {
     @PostMapping("/health-check")
     public ResponseEntity<List<Device>> checkAllHealth(){
         return ResponseEntity.ok(deviceService.checkAllDevicesHealth());
+    }
+
+    @GetMapping("/queue/stats")
+    public ResponseEntity<Map<String, Object>> getDeviceQueueStats() {
+        return ResponseEntity.ok(Map.of(
+                "pendingEvents",deviceEventPublisher.size()
+        ));
     }
 
 

@@ -1,10 +1,10 @@
 package com.example.devicemonitor.service;
 
 import com.example.devicemonitor.exception.DeviceNotFoundException;
-import com.example.devicemonitor.model.Device;
-import com.example.devicemonitor.model.DeviceStatus;
-import com.example.devicemonitor.model.DeviceStatusSummary;
+import com.example.devicemonitor.model.*;
 import com.example.devicemonitor.repository.DeviceRepository;
+import com.example.devicemonitor.repository.OutboxEventRepository;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
@@ -19,13 +19,19 @@ public class DeviceService {
 
     private final DeviceRepository repository;
     private final DeviceCacheService cacheService;
+    private final DeviceEventPublisher eventPublisher;
+    private final OutboxEventRepository outboxEventRepository;
 
-    public DeviceService(DeviceRepository repository, DeviceCacheService cacheService) {
+    public DeviceService(DeviceRepository repository, DeviceCacheService cacheService,
+                         DeviceEventPublisher eventPublisher, OutboxEventRepository outboxEventRepository) {
         this.repository = repository;
         this.cacheService = cacheService;
+        this.eventPublisher = eventPublisher;
+        this.outboxEventRepository = outboxEventRepository;
     }
 
     // CREATE & populate Cache
+    @Transactional
     public Device registerDevice(Device device) {
         if (repository.existsByIpAddress(device.getIpAddress())) {
             throw new IllegalArgumentException("Device " + device.getIpAddress() + " already exists");
@@ -33,7 +39,21 @@ public class DeviceService {
         device.setStatus(DeviceStatus.UNKNOWN);
         device.setLastSeenAt(Instant.now());
         Device saved = repository.save(device);
+
+        // Write event to outbox in same transaction;
+        OutboxEvent outboxEvent = new OutboxEvent(
+                saved.getId(), DeviceEvent.EventType.DEVICE_CREATED,
+                String.format("{\"deviceId\":%d,\"name\":\"%s\"}",
+                        saved.getId(), saved.getName())
+        );
+        outboxEventRepository.save(outboxEvent);
+
+        // Publish to cache AFTER transaction commits
         cacheService.put(saved.getId(), saved);
+        eventPublisher.publish(new DeviceEvent(
+                saved.getId(),DeviceEvent.EventType.DEVICE_CREATED,
+                saved.getName(), saved.getStatus()
+        ));
         return saved;
     }
 
@@ -59,6 +79,7 @@ public class DeviceService {
     }
 
     // Update
+    @Transactional
     public Device updateDevice(Long id, Device updates) {
         Device existingDevice = getDeviceById(id);
 
@@ -77,15 +98,42 @@ public class DeviceService {
                 });
 
         Device saved = repository.save(existingDevice);
+
+        // Write event to outbox in same transaction;
+        OutboxEvent outboxEvent = new OutboxEvent(
+                saved.getId(),
+                DeviceEvent.EventType.DEVICE_UPDATED,
+                String.format("{\"deviceId\":%d,\"name\":\"%s\"}",
+                        saved.getId(), saved.getName())
+        );
+        outboxEventRepository.save(outboxEvent);
+
         cacheService.invalidate(id);
+        eventPublisher.publish(new DeviceEvent(
+                saved.getId(),DeviceEvent.EventType.DEVICE_UPDATED,
+                saved.getName(), saved.getStatus()
+        ));
         return saved;
     }
 
     // Delete
+    @Transactional
     public void deleteDevice(long id) {
         Device device = getDeviceById(id);
+
+        // Write event to outbox IN SAME TRANSACTION as delete
+        OutboxEvent outboxEvent = new OutboxEvent(
+                id,
+                DeviceEvent.EventType.DEVICE_DELETED,
+                String.format("{\"deviceId\":%d}", id)
+        );
+        outboxEventRepository.save(outboxEvent);
         repository.delete(device);
         cacheService.invalidate(id);
+        eventPublisher.publish(new DeviceEvent(
+                device.getId(),DeviceEvent.EventType.DEVICE_DELETED,
+                device.getName(), device.getStatus()
+        ));
     }
 
     public List<DeviceStatusSummary> getDeviceStatusSummary() {

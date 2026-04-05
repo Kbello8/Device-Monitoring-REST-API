@@ -3,8 +3,11 @@ package com.example.devicemonitor;
 import com.example.devicemonitor.exception.DeviceNotFoundException;
 import com.example.devicemonitor.model.Device;
 import com.example.devicemonitor.model.DeviceStatus;
+import com.example.devicemonitor.model.OutboxEvent;
 import com.example.devicemonitor.repository.DeviceRepository;
+import com.example.devicemonitor.repository.OutboxEventRepository;
 import com.example.devicemonitor.service.DeviceCacheService;
+import com.example.devicemonitor.service.DeviceEventPublisher;
 import com.example.devicemonitor.service.DeviceService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -33,6 +36,12 @@ class DevicemonitorApplicationTests {
 	@Mock
 	private DeviceCacheService cacheService;
 
+	@Mock
+	private DeviceEventPublisher eventPublisher;
+
+	@Mock
+	private OutboxEventRepository outboxRepository;
+
 	@InjectMocks
 	private DeviceService service;
 
@@ -51,11 +60,15 @@ class DevicemonitorApplicationTests {
 	void registerDevice_savesAndReturnsDevice() {
 		when(repository.existsByIpAddress("192.168.1.10")).thenReturn(false);
 		when(repository.save(any(Device.class))).thenReturn(testDevice);
+		when(outboxRepository.save(any(OutboxEvent.class)))
+				.thenReturn(new OutboxEvent());
 
 		Device result = service.registerDevice(testDevice);
 
 		assertThat(result.getName()).isEqualTo("Workstation-01");
 		verify(repository, times(1)).save(testDevice);
+
+
 	}
 
 	@Test
@@ -118,6 +131,8 @@ class DevicemonitorApplicationTests {
 	void updateDevice_updatesOnlyProvidedFields() {
 		when(repository.findById(1L)).thenReturn(Optional.of(testDevice));
 		when(repository.save(any(Device.class))).thenReturn(testDevice);
+		when(outboxRepository.save(any(OutboxEvent.class)))
+				.thenReturn(new OutboxEvent());
 
 		Device updates = new Device();
 		updates.setStatus(DeviceStatus.ONLINE);
@@ -134,6 +149,8 @@ class DevicemonitorApplicationTests {
 	@Test
 	void deleteDevice_callsRepositoryDelete() {
 		when(repository.findById(1L)).thenReturn(Optional.of(testDevice));
+		when(outboxRepository.save(any(OutboxEvent.class)))
+				.thenReturn(new OutboxEvent());
 
 		service.deleteDevice(1L);
 

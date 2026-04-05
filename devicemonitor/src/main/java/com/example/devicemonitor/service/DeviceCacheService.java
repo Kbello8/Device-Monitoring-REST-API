@@ -43,7 +43,7 @@ public class DeviceCacheService {
         lock.readLock().lock();
         try {
             CacheEntry cacheEntry = cache.get(id);
-            if (cacheEntry == null || cacheEntry.isExpired()) {
+            if (cacheEntry != null || cacheEntry.isExpired()) {
                 return Optional.empty();
             }
             return Optional.of(cacheEntry.device);

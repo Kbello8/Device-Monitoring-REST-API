@@ -38,3 +38,6 @@ DELETE http://localhost:8080/api/devices/1
 
 ### Check cache stats
 GET http://localhost:8080/api/devices/cache/stats
+
+### Get queue stats
+GET http://localhost:8080/api/devices/queue/stats
