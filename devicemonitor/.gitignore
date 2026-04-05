@@ -3,6 +3,10 @@ target/
 .mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/
 !**/src/test/**/target/
+.env
+CLAUDE.md
+.idea/
+.claude/
 
 ### STS ###
 .apt_generated
@@ -32,8 +36,3 @@ build/
 ### VS Code ###
 .vscode/
 
-.env
-CLAUDE.md
-.idea/
-.claude/
-code-overview.txt

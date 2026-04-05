@@ -4,6 +4,7 @@ import com.example.devicemonitor.exception.DeviceNotFoundException;
 import com.example.devicemonitor.model.Device;
 import com.example.devicemonitor.model.DeviceStatus;
 import com.example.devicemonitor.repository.DeviceRepository;
+import com.example.devicemonitor.service.DeviceCacheService;
 import com.example.devicemonitor.service.DeviceService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -28,6 +29,9 @@ class DevicemonitorApplicationTests {
 
 	@Mock
 	private DeviceRepository repository;
+
+	@Mock
+	private DeviceCacheService cacheService;
 
 	@InjectMocks
 	private DeviceService service;
