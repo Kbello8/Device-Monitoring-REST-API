@@ -3,7 +3,7 @@ package com.example.devicemonitor.controller;
 import com.example.devicemonitor.model.Device;
 import com.example.devicemonitor.model.DeviceStatus;
 import com.example.devicemonitor.model.DeviceStatusSummary;
-import com.example.devicemonitor.service.DeviceCacheService;
+import com.example.devicemonitor.service.CacheService;
 import com.example.devicemonitor.service.DeviceEventPublisher;
 import com.example.devicemonitor.service.DeviceService;
 import jakarta.validation.Valid;
@@ -21,10 +21,10 @@ import java.util.Optional;
 public class DeviceController {
 
     private final DeviceService deviceService;
-    private final DeviceCacheService cacheService;
+    private final CacheService cacheService;
     private final DeviceEventPublisher deviceEventPublisher;
 
-    public DeviceController(DeviceService deviceService, DeviceCacheService cacheService, DeviceEventPublisher deviceEventPublisher) {
+    public DeviceController(DeviceService deviceService, CacheService cacheService, DeviceEventPublisher deviceEventPublisher) {
         this.deviceService = deviceService;
         this.cacheService = cacheService;
         this.deviceEventPublisher = deviceEventPublisher;

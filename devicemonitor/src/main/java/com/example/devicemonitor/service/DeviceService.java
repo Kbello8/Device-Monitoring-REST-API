@@ -18,11 +18,11 @@ import java.util.concurrent.ThreadLocalRandom;
 public class DeviceService {
 
     private final DeviceRepository repository;
-    private final DeviceCacheService cacheService;
+    private final CacheService cacheService;
     private final DeviceEventPublisher eventPublisher;
     private final OutboxEventRepository outboxEventRepository;
 
-    public DeviceService(DeviceRepository repository, DeviceCacheService cacheService,
+    public DeviceService(DeviceRepository repository, CacheService cacheService,
                          DeviceEventPublisher eventPublisher, OutboxEventRepository outboxEventRepository) {
         this.repository = repository;
         this.cacheService = cacheService;

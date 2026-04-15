@@ -3,6 +3,7 @@ package com.example.devicemonitor.service;
 import com.example.devicemonitor.model.Device;
 import com.example.devicemonitor.repository.DeviceRepository;
 import org.hibernate.cache.spi.entry.CacheEntry;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
@@ -16,7 +17,8 @@ import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 @Service
-public class DeviceCacheService {
+@Profile("!aws")
+public class DeviceCacheService implements CacheService {
 
     private final DeviceRepository deviceRepository;
 
