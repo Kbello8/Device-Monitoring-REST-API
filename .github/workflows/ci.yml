@@ -47,7 +47,7 @@ jobs:
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: arn:aws:iam::4850-3848-2338:role/devicemonitor-github-actions
+          role-to-assume: arn:aws:iam::485038482338:role/devicemonitor-github-actions
           aws-region: ${{ env.AWS_REGION }}
 
       - name: Login to Amazon ECR
