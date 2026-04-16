@@ -81,26 +81,28 @@ jobs:
       - name: Download current task definition
         run: |
           aws ecs describe-task-definition \
-          --task-definition devicemonitor-task \
-          --region ${{ env.AWS_REGION }} \
-          --query taskDefinition \
-            | python3 -c "
-          import json, sys
-          td = json.load(sys.stdin)
-          # Remove fields that cause registration errors
-          for key in ['compatibilities','taskDefinitionArn','requiresAttributes',
-                      'revision','status','registeredAt','registeredBy',
-                      'enableFaultInjection']:
-            td.pop(key, None)
-            print(json.dumps(td))
-          > ${{ github.workspace }}/devicemonitor-task.json
-          echo "Task definition downloaded:"
-          cat ${{ github.workspace }}/devicemonitor-task.json | head -5
+            --task-definition devicemonitor-task \
+            --region ${{ env.AWS_REGION }} \
+            --query taskDefinition \
+            --output json > raw-task.json
+          python3 - <<'PYEOF'
+          import json
+          with open('raw-task.json') as f:
+              td = json.load(f)
+          remove = ['compatibilities','taskDefinitionArn','requiresAttributes',
+                    'revision','status','registeredAt','registeredBy',
+                    'enableFaultInjection']
+          for key in remove:
+              td.pop(key, None)
+          with open('devicemonitor-task.json', 'w') as f:
+              json.dump(td, f)
+          PYEOF
+          echo "Task definition cleaned successfully"
 
       - name: Deploy to ECS
-        uses: aws-actions/amazon-ecs-deploy-task-definition@v1
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v2
         with:
-          task-definition: ${{ github.workspace }}/devicemonitor-task.json
+          task-definition: devicemonitor-task.json
           service: ${{ env.ECS_SERVICE }}
           cluster: ${{ env.ECS_CLUSTER }}
           wait-for-service-stability: true
