@@ -84,6 +84,9 @@ jobs:
           --task-definition devicemonitor-task \
           --region ${{ env.AWS_REGION }} \
           --query taskDefinition \
+          > ${{ github.workspace }}/devicemonitor-task.json
+          echo "Task definition downloaded:"
+          cat ${{ github.workspace }}/devicemonitor-task.json | head -5
 
       - name: Deploy to ECS
         uses: aws-actions/amazon-ecs-deploy-task-definition@v1
