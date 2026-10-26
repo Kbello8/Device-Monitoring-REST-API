@@ -22,3 +22,4 @@ async health checks with CompletableFuture, and SQL window functions.
 \`\`\`bash
 ./mvnw test
 \`\`\`
+
